@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Luma Recommender — Math Foundations (Grades 1–5)</title>
+    <style>
+      :root{--bg:#6fe184;--card:#ffffff;--accent:#2b9d7b;--accent-2:#ffb703;--muted:#666}
+      body{background:var(--bg);font-family: 'Segoe UI', Roboto, Arial, sans-serif;color:#123;margin:0}
+      header{display:flex;align-items:center;gap:12px;padding:18px 20px;background:linear-gradient(90deg,#dff7ec,#eefaf8);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+      h1{font-size:20px;margin:0}
+      .container{max-width:980px;margin:20px auto;padding:0 16px}
+      .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+      .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+      .center{text-align:center}
+      .grade-btn{background:#fff;border:2px solid #e6f2ee;padding:10px 14px;border-radius:10px;cursor:pointer;margin:6px;font-size:16px}
+      .grade-btn.selected{border-color:var(--accent);background:linear-gradient(180deg,#e9fff4,#ffffff)}
+      .big{font-size:22px}
+      .module{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:8px;background:linear-gradient(90deg,#f8fff9,#ffffff)}
+      .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+      .btn.secondary{background:#eef2f2;color:#123}
+      .small{font-size:13px;color:var(--muted)}
+      .prob{font-size:26px;margin:10px 0}
+      input[type='number']{font-size:22px;padding:8px;border-radius:8px;border:1px solid #ddd;width:120px}
+      .success{color:green;font-weight:700}
+      .danger{color:#e85a5a;font-weight:700}
+      footer{padding:14px;text-align:center;color:var(--muted);font-size:13px}
+      .progress-bar{height:10px;background:#cbbdbd;border-radius:6px;overflow:hidden}
+      .progress-bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#6fd3b2);}
+      @media (max-width:900px){.grid{grid-template-columns:1fr}.container{padding:0 12px}}
+      .badge{display:inline-block;padding:8px 10px;border-radius:12px;background:#fff;margin:6px;box-shadow:0 2px 4px rgba(0,0,0,.08)}
+      .confetti-canvas{position:fixed;left:0;top:0;pointer-events:none;width:100%;height:100%;z-index:9999}
+      .fade-in{animation:fadeIn .6s ease both}
+      @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    </style>
+  </head>
+  <body>
+    <canvas id="confetti" class="confetti-canvas"></canvas>
+    <header>
+      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44'><rect rx='8' width='44' height='44' fill='%232b9d7b'/><text x='50%' y='55%' text-anchor='middle' font-size='22' font-family='sans-serif' fill='white'>🔢</text></rect></svg>" alt="logo" style="width:44px;height:44px;border-radius:8px;"/>
+      <div style="flex:1">
+        <h1>LUMA - Maths Learning App </h1>
+        
+        <div class="small">Personalized Learning Path → Recommender Maths ✅</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="account-area" class="small"></div>
+        <button id="switch-role" class="btn secondary small">Switch role</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="grid">
+        <section>
+          <div class="card" id="auth-card">
+            <div class="center">
+              <div class="small">Sign in or create an account</div>
+              <div style="margin-top:8px" id="auth-forms"></div>
+            </div>
+          </div>
+
+          <div class="card fade-in" style="margin-top:12px">
+            <div class="center">
+              <div class="small">Choose learner grade</div>
+              <div style="margin-top:8px;">
+                <button class="grade-btn" data-grade="1">Grade 1</button>
+                <button class="grade-btn" data-grade="2">Grade 2</button>
+                <button class="grade-btn" data-grade="3">Grade 3</button>
+                <button class="grade-btn" data-grade="4">Grade 4</button>
+                <button class="grade-btn" data-grade="5">Grade 5</button>
+              </div>
+            </div>
+            <hr style="margin:12px 0;border:none;border-top:1px solid #f0f0f0"/>
+            <div>
+              <div class="small">Quick diagnostic (5 questions)</div>
+              <div id="diagnostic-area" style="margin-top:8px"></div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="start-diagnostic" class="btn">Start diagnostic</button>
+                <button id="reset-progress" class="btn secondary">Reset progress</button>
+                <button id="print-worksheet" class="btn secondary">Print worksheet</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card fade-in" style="margin-top:12px">
+            <h3 style="margin-top:0">Practice</h3>
+            <div class="small">Pick a module and practice. Difficulty adapts to performance.</div>
+            <div id="modules-list" style="margin-top:8px"></div>
+            <div id="practice-area" style="margin-top:12px"></div>
+          </div>
+        </section>
+
+        <aside>
+          <div class="card">
+            <h3 style="margin-top:0">Recommendations</h3>
+            <div id="recommendations" class="small">Run the diagnostic to get personalized recommendations.</div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3 style="margin-top:0">Progress</h3>
+            <div id="progress-dashboard" class="small">No data yet. Start a diagnostic or a practice session.</div>
+            <div style="margin-top:10px" id="badges"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3 style="margin-top:0">Teacher / Parent</h3>
+            <div id="teacher-area" class="small">Login as a teacher to view class progress and export reports.</div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer>
+      Designed for young learners • Local-first data (keeps progress in browser) • Optional server sync
+      <div id="contrast-status" class="small" style="margin-top:6px">Background: Soft Mint — checking contrast…</div>
+    </footer>
+
+    <script>
+    // ====== Minimal app with animations, rewards, MCQ and visual questions, and client-side accounts ======
+    const MODULES = [
+      {id:'number', name:'Number Sense', desc:'Counting, comparing, and place value.'},
+      {id:'addsub', name:'Addition & Subtraction', desc:'Basic operations and facts.'},
+      {id:'place', name:'Place Value', desc:'Understanding tens, ones, hundreds.'},
+      {id:'word', name:'Word Problems', desc:'Apply math in short stories.'},
+      {id:'measure', name:'Shapes & Measurement', desc:'Shapes, sizes, lengths.'}
+    ];
+
+    // Simple storage: try server, fallback to localStorage
+    const STORAGE_KEY = 'luma_recommender_progress_v1';
+    const USERS_KEY = 'luma_recommender_users_v1';
+
+    // UI helpers
+    const el = sel=>document.querySelector(sel);
+    const elAll = sel=>Array.from(document.querySelectorAll(sel));
+    const randInt = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+    // App state
+    let currentUser = null; // {username,role:'student'|'teacher'}
+    let selectedGrade = 1;
+    let diagnosticQuestions = [];
+    let diagnosticAnswers = [];
+    let practiceState = {module:null,difficulty:1,streak:0,current:null};
+
+    // ===== Confetti animation (simple particle system) =====
+    const confettiCanvas = el('#confetti');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    let confettiParticles=[];
+    function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+    function spawnConfetti(){ const colors=['#ffb703','#2b9d7b','#ff6b6b','#7b6bff','#ffd166']; for(let i=0;i<80;i++){ confettiParticles.push({x:Math.random()*confettiCanvas.width,y:-20,vx:(Math.random()-0.5)*4,vy:Math.random()*3+2,color:colors[Math.floor(Math.random()*colors.length)],rot:Math.random()*360,vr:Math.random()*6-3,size:6+Math.random()*8,life:200}); } }
+    function confettiTick(){ confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); confettiParticles.forEach((p,i)=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.06; p.rot+=p.vr; p.life--; confettiCtx.save(); confettiCtx.translate(p.x,p.y); confettiCtx.rotate(p.rot*Math.PI/180); confettiCtx.fillStyle=p.color; confettiCtx.fillRect(-p.size/2,-p.size/2,p.size,p.size); confettiCtx.restore(); if(p.y>confettiCanvas.height+50||p.life<0) confettiParticles.splice(i,1); }); requestAnimationFrame(confettiTick);} requestAnimationFrame(confettiTick);
+
+    function celebrate(){ spawnConfetti(); setTimeout(()=>spawnConfetti(),300); }
+
+    // ===== Accounts (client-side simple) =====
+    function loadUsers(){ return JSON.parse(localStorage.getItem(USERS_KEY)||'{}'); }
+    function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+
+    function renderAuth(){
+      const area = el('#auth-forms'); area.innerHTML='';
+      if(currentUser){
+        el('#account-area').textContent = `${currentUser.username} (${currentUser.role})`;
+        const btn = document.createElement('button'); btn.className='btn secondary small'; btn.textContent='Sign out'; btn.addEventListener('click', ()=>{ currentUser=null; renderAuth(); renderTeacherArea(); });
+        area.appendChild(btn);
+        if(currentUser.role==='teacher'){
+          const manage = document.createElement('button'); manage.className='btn small'; manage.textContent='Teacher Dashboard'; manage.addEventListener('click', ()=>renderTeacherDashboard()); area.appendChild(manage);
+        }
+        return;
+      }
+      el('#account-area').textContent = '';
+      const login = document.createElement('div'); login.innerHTML = `<div style='margin:6px'><input placeholder='username' id='login-user' style='padding:8px;border-radius:8px;border:1px solid #ddd'/></div><div style='display:flex;gap:6px;margin-top:6px'><button id='btn-login' class='btn small'>Sign in</button><button id='btn-new' class='btn secondary small'>Create</button></div>`;
+      area.appendChild(login);
+      area.querySelector('#btn-login').addEventListener('click', ()=>{
+        const name = area.querySelector('#login-user').value.trim(); if(!name) return alert('Enter username'); const users=loadUsers(); if(users[name]){ currentUser={username:name,role:users[name].role}; alert('Signed in as '+name); renderAuth(); renderProgress(); renderRecommendations(); renderTeacherArea(); } else alert('User not found — create an account');
+      });
+      area.querySelector('#btn-new').addEventListener('click', ()=>{
+        const name = area.querySelector('#login-user').value.trim(); if(!name) return alert('Enter a username to create'); const users=loadUsers(); users[name] = users[name]||{role:'student',created:Date.now()}; saveUsers(users); currentUser={username:name,role:users[name].role}; alert('Account created: '+name+' (student)'); renderAuth(); renderProgress(); renderRecommendations(); renderTeacherArea();
+      });
+      // quick role switch (teacher) — in real app, secure this
+      el('#switch-role').addEventListener('click', ()=>{
+        const nm = prompt('Switch to username (teacher account). Type teacher to see dashboard sample.'); if(!nm) return; const users=loadUsers(); users[nm] = users[nm]||{role:'teacher',created:Date.now()}; saveUsers(users); currentUser={username:nm,role:users[nm].role}; alert('Signed in as '+nm+' ('+users[nm].role+')'); renderAuth(); renderTeacherArea();
+      });
+    }
+
+    // ===== Storage for progress per user =====
+    function loadProgress(user){ const data = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); return user? (data[user]||{}) : data; }
+    function saveProgress(user, data){ const all = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); all[user] = data; localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); }
+
+    // ===== Richer question generation =====
+    function genProblem(moduleId, grade, difficulty=1){
+      const gBase = {1:10,2:20,3:100,4:200,5:500}[grade]||20;
+      if(moduleId==='number'){
+        if(Math.random()<0.5){
+          // MCQ: which is bigger?
+          const a = randInt(0, Math.max(5, Math.floor(gBase/4))); const b = randInt(0, Math.max(5, Math.floor(gBase/4)));
+          const choices = [String(a), String(b)]; const correct = a>b?choices[0]:a<b?choices[1]:'equal'; return {module:moduleId, text:`Which is bigger?`, choices:[a,b], answer: correct, type:'mcq'};
+        } else {
+          const a = randInt(0, Math.max(5, Math.floor(gBase/4)) ); const b = randInt(0, Math.max(5, Math.floor(gBase/4)) ); return {module:moduleId, text:`${a} + ${b} = ?`, answer:a+b, type:'number'};
+        }
+      }
+      if(moduleId==='addsub'){
+        if(Math.random()<0.4){ // visual: choose correct sum in buttons
+          const a = randInt(1, Math.max(5, Math.floor(gBase/4)) ); const b = randInt(1, Math.max(5, Math.floor(gBase/4)) ); const correct = a+b; const choices=[correct, correct+randInt(1,4), Math.max(1,correct-randInt(1,3))].sort(()=>0.5-Math.random()); return {module:moduleId, text:`${a} + ${b} = ?`, choices, answer:correct, type:'mcq'};
+        }
+        const a = randInt(1, Math.max(5, Math.floor(gBase/4)) ); const b = randInt(1, Math.max(5, Math.floor(gBase/4)) ); const op = Math.random()<0.8?'+':'-'; const text = op==='+' ? `${a} + ${b} = ?` : `${Math.max(a,b)} - ${Math.min(a,b)} = ?`; const answer = op==='+'?a+b:Math.max(a,b)-Math.min(a,b); return {module:moduleId,text,answer,type:'number'};
+      }
+      if(moduleId==='place'){
+        const num = randInt(10, Math.max(20, gBase)); return {module:moduleId, text:`What digit is in the tens place of ${num}?`, answer:Math.floor(num/10)%10, type:'number'};
+      }
+      if(moduleId==='word'){
+        if(Math.random()<0.5){ const a = randInt(1,7); const b = randInt(1,7); return {module:moduleId, text:`Anna has ${a} apples. She gets ${b} more. How many apples now?`, answer: a+b, type:'number'} }
+        // MCQ story
+        const a = randInt(2,6); const b = randInt(1,4); const correct = a-b; const choices=[correct, correct+1, correct+2].sort(()=>0.5-Math.random()); return {module:moduleId, text:`Sam has ${a} toys and gives ${b} away. How many left?`, choices, answer:correct, type:'mcq'};
+      }
+      if(moduleId==='measure'){
+        // shapes: sometimes simple selection, sometimes drag-and-drop
+        const shapes = ['triangle','square','circle','rectangle'];
+        if(Math.random()<0.5){
+          const choices = shapes.slice().sort(()=>0.5-Math.random());
+          return {module:moduleId, text:`Drag the correct shape into the box: Which shape has 4 equal sides?`, choices, answer:'square', type:'drag'};
+        }
+        const correct = 'square'; return {module:moduleId, text:`Which shape has 4 equal sides?`, choices:shapes, answer:correct, type:'shape'};
+      }
+      return {module:moduleId,text:'1 + 1 = ?',answer:2,type:'number'};
+    }
+
+    // ===== Diagnostic UI =====
+    function renderDiagnostic(){ const area = el('#diagnostic-area'); area.innerHTML=''; const info = document.createElement('div'); info.className='small'; info.textContent=`Grade ${selectedGrade} — Ready to test basics with 5 short questions.`; area.appendChild(info); }
+    el('#start-diagnostic').addEventListener('click', ()=>{ if(!currentUser) return alert('Please sign in as a learner first.'); diagnosticQuestions = []; for(let i=0;i<5;i++){ diagnosticQuestions.push(genProblem(MODULES[i%MODULES.length].id, selectedGrade)); } diagnosticAnswers=[]; renderDiagnosticQuestions(); });
+
+    function renderDiagnosticQuestions(){ const area=el('#diagnostic-area'); area.innerHTML=''; diagnosticQuestions.forEach((q,idx)=>{ const qWrap=document.createElement('div'); qWrap.style.margin='8px 0'; const label=document.createElement('div'); label.className='prob'; label.textContent=(idx+1)+'. '+q.text; qWrap.appendChild(label);
+      if(q.type==='number'){
+        const input=document.createElement('input'); input.type='number'; input.dataset.idx=idx; input.style.marginRight='8px'; qWrap.appendChild(input);
+      } else if(q.type==='mcq'){
+        q.choices.forEach(c=>{ const b=document.createElement('button'); b.className='btn secondary'; b.style.marginRight='6px'; b.textContent=c; b.addEventListener('click', ()=>{ qWrap.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); b.dataset.choice=c; }); qWrap.appendChild(b); });
+      } else if(q.type==='shape' || q.type==='drag'){
+        qWrap.dataset.qidx=idx;
+        if(q.type==='shape'){
+          const holder = document.createElement('div'); holder.style.display='flex'; holder.style.gap='8px'; q.choices.forEach(s=>{ const btn=document.createElement('button'); btn.className='btn secondary'; btn.textContent=s; btn.addEventListener('click', ()=>{ holder.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); btn.dataset.choice=s; }); holder.appendChild(btn); }); qWrap.appendChild(holder);
+        } else {
+          const choicesHolder = document.createElement('div'); choicesHolder.style.display='flex'; choicesHolder.style.gap='8px'; q.choices.forEach(s=>{ const btn=document.createElement('button'); btn.className='btn secondary'; btn.textContent=s; btn.draggable=true; btn.dataset.choice=s; btn.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', s); btn.classList.add('dragging'); }); btn.addEventListener('dragend', e=>{ btn.classList.remove('dragging'); }); choicesHolder.appendChild(btn); });
+          const dropBox=document.createElement('div'); dropBox.style.marginTop='8px'; dropBox.style.padding='12px'; dropBox.style.border='2px dashed #ddd'; dropBox.style.borderRadius='8px'; dropBox.textContent='Drop the correct shape here'; dropBox.dataset.choice='';
+          dropBox.addEventListener('dragover', e=>{ e.preventDefault(); dropBox.style.borderColor='#2b9d7b'; });
+          dropBox.addEventListener('dragleave', e=>{ dropBox.style.borderColor='#ddd'; });
+          dropBox.addEventListener('drop', e=>{ e.preventDefault(); dropBox.style.borderColor='#ddd'; const v=e.dataTransfer.getData('text/plain'); dropBox.textContent='Selected: '+v; dropBox.dataset.choice=v; });
+          qWrap.appendChild(choicesHolder); qWrap.appendChild(dropBox);
+        }
+      }
+      area.appendChild(qWrap);
+    });
+      const submit=document.createElement('button'); submit.className='btn'; submit.textContent='Submit answers'; submit.addEventListener('click', ()=>{ diagnosticAnswers=[]; diagnosticQuestions.forEach((q,idx)=>{ const qWrap = document.querySelector('#diagnostic-area [data-qidx="'+idx+'"]'); const input = qWrap ? qWrap.querySelector('[data-idx="'+idx+'"]') : null; if(input) diagnosticAnswers.push(input.value); else if(qWrap){ const choiceEl = qWrap.querySelector('[data-choice]') || qWrap.querySelector('.selected'); diagnosticAnswers.push(choiceEl ? (choiceEl.dataset.choice || choiceEl.textContent.trim()) : ''); } else { diagnosticAnswers.push(''); } }); evaluateDiagnostic(); }); area.appendChild(submit);
+    }
+
+    function evaluateDiagnostic(){ const results={}; diagnosticQuestions.forEach((q,idx)=>{ const got=diagnosticAnswers[idx]; const ok = String(got).trim().toLowerCase()===String(q.answer).trim().toLowerCase(); results[q.module]=results[q.module]||{total:0,correct:0}; results[q.module].total++; if(ok) results[q.module].correct++; }); // save to user's progress
+      if(currentUser){ const prog = loadProgress(currentUser.username); prog[selectedGrade] = prog[selectedGrade]||{}; Object.keys(results).forEach(mod=>{ const r=results[mod]; prog[selectedGrade][mod]=prog[selectedGrade][mod]||{attempts:0,correct:0}; prog[selectedGrade][mod].attempts+=r.total; prog[selectedGrade][mod].correct+=r.correct; }); saveProgress(currentUser.username, prog); }
+      renderRecommendations(results); renderProgress(); let message='Diagnostic results:\n'; Object.keys(results).forEach(mod=>{ const r=results[mod]; const percent = Math.round(r.correct/r.total*100); message+=`${moduleName(mod)}: ${r.correct}/${r.total} (${percent}%)\n`; }); alert(message); }
+
+    function moduleName(id){ return (MODULES.find(m=>m.id===id)||{}).name || id; }
+
+    function renderRecommendations(resultsOrFlag){ const cont=el('#recommendations'); if(resultsOrFlag==='choose'){ cont.textContent='Select a grade, then run the short diagnostic to get recommendations.'; return; } let computed = resultsOrFlag; if(!computed){ const p = currentUser? loadProgress(currentUser.username)[selectedGrade]||{} : {}; computed={}; Object.keys(p).forEach(mod=>computed[mod]={total:p[mod].attempts,correct:p[mod].correct}); }
+      const areas = MODULES.map(m=>{ const r=computed[m.id]||{total:0,correct:0}; const pct = r.total? Math.round(r.correct/r.total*100):0; const need = pct>=80? 'Good' : pct>=50 ? 'Practice' : 'Needs foundations'; return {...m,pct,need}; }); areas.sort((a,b)=>a.pct-b.pct); cont.innerHTML=''; areas.forEach(a=>{ const d=document.createElement('div'); d.className='module'; d.innerHTML=`<div><strong>${a.name}</strong><div class="small">${a.desc}</div></div><div style="text-align:right"><div class="small">${a.pct}%</div><div class='${a.pct>=80?'success':a.pct>=50?'':'danger'}'>${a.need}</div></div>`; cont.appendChild(d); }); const lp=document.createElement('div'); lp.style.marginTop='8px'; lp.innerHTML=`<hr/><div><strong>Suggested path</strong><ol id='path-list'></ol></div>`; cont.appendChild(lp); const pathList = cont.querySelector('#path-list'); const prioritized = areas.filter(x=>x.pct<80).slice(0,3); if(prioritized.length===0){ pathList.innerHTML='<li>Keep practicing — learner is doing well across foundations!</li>' } else prioritized.forEach(a=>{ const li = document.createElement('li'); li.textContent=`${a.name} — focus on basics for 5–10 minutes daily.`; pathList.appendChild(li); }); }
+
+    function renderProgress(){ const cont = el('#progress-dashboard'); cont.innerHTML=''; if(!currentUser){ cont.textContent='Sign in to see personal progress.'; return; } const prog = loadProgress(currentUser.username); const p = prog[selectedGrade]||{}; MODULES.forEach(m=>{ const s = p[m.id]||{attempts:0,correct:0}; const pct = s.attempts ? Math.round(s.correct / s.attempts * 100) : 0; const item=document.createElement('div'); item.style.marginBottom='8px'; item.innerHTML=`<div style='display:flex;justify-content:space-between'><div><strong>${m.name}</strong><div class='small'>${m.desc}</div></div><div style='width:120px;text-align:right'>${pct}%</div></div><div class='progress-bar' aria-hidden='true' style='margin-top:6px'><i style='width:${pct}%'></i></div>`; cont.appendChild(item); }); renderBadges(); }
+
+    function renderBadges(){ const bcont = el('#badges'); bcont.innerHTML=''; if(!currentUser) return; const prog = loadProgress(currentUser.username); const userTotalCorrect = Object.values(prog).reduce((acc,gradeObj)=>{ Object.values(gradeObj).forEach(m=>acc+=m.correct||0); return acc; },0); if(userTotalCorrect>=5){ const badge=document.createElement('div'); badge.className='badge fade-in'; badge.textContent='🏆 First 5 correct answers!'; bcont.appendChild(badge); } }
+
+    el('#reset-progress').addEventListener('click', ()=>{ if(!currentUser) return alert('Sign in to reset your progress.'); if(confirm('Erase local progress for this user?')){ saveProgress(currentUser.username, {}); renderProgress(); renderRecommendations(); alert('Progress cleared.'); } });
+
+    el('#print-worksheet').addEventListener('click', ()=>{ const sheet = document.createElement('div'); sheet.style.padding='20px'; sheet.innerHTML = `<h2>Worksheet — Grade ${selectedGrade}</h2>`; for(let i=0;i<8;i++){ const p=genProblem(MODULES[i%MODULES.length].id, selectedGrade); sheet.innerHTML += `<div style='margin:6px 0;font-size:18px'>${i+1}. ${p.text.replace('= ?', '_____')}</div>` } const w=window.open('','_blank'); w.document.body.appendChild(sheet); w.print(); });
+
+    function refreshModules(){ const cont = el('#modules-list'); cont.innerHTML=''; MODULES.forEach(m=>{ const node=document.createElement('div'); node.className='module'; node.innerHTML=`<div><strong>${m.name}</strong><div class='small'>${m.desc}</div></div><div><button class='btn' data-id='${m.id}'>Practice</button></div>`; cont.appendChild(node); }); cont.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>startPractice(b.dataset.id))); }
+
+    function startPractice(moduleId){ if(!currentUser) return alert('Sign in as a learner to practice.'); practiceState.module = moduleId; practiceState.difficulty = 1; practiceState.streak=0; renderPractice(); }
+
+    function renderPractice(){ const area = el('#practice-area'); area.innerHTML=''; if(!practiceState.module) return; const m = MODULES.find(x=>x.id===practiceState.module); const title=document.createElement('div'); title.innerHTML=`<strong>${m.name}</strong> <div class='small'>Difficulty: ${practiceState.difficulty}</div>`; area.appendChild(title); const prob = genProblem(m.id, selectedGrade, practiceState.difficulty); practiceState.current = prob; const q = document.createElement('div'); q.className='prob'; q.textContent = prob.text; area.appendChild(q);
+      if(prob.type==='number'){
+        const input=document.createElement('input'); input.type='number'; input.id='practice-input'; area.appendChild(input);
+      } else if(prob.type==='mcq'){
+        const holder=document.createElement('div'); holder.style.display='flex'; holder.style.gap='8px'; prob.choices.forEach(c=>{ const b=document.createElement('button'); b.className='btn secondary'; b.textContent=c; b.addEventListener('click', ()=>{ holder.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); b.dataset.choice=c; }); holder.appendChild(b); }); area.appendChild(holder);
+      } else if(prob.type==='shape'){
+        const holder=document.createElement('div'); holder.style.display='flex'; holder.style.gap='8px'; prob.choices.forEach(s=>{ const b=document.createElement('button'); b.className='btn secondary'; b.textContent=s; b.addEventListener('click', ()=>{ holder.querySelectorAll('button').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); b.dataset.choice=s; }); holder.appendChild(b); }); area.appendChild(holder);
+      }
+      const submit=document.createElement('button'); submit.className='btn'; submit.textContent='Check'; submit.style.marginLeft='8px'; submit.addEventListener('click', ()=>{ const ansEl = document.getElementById('practice-input') || area.querySelector('.selected') || area.querySelector('[data-choice]'); const ans = ansEl ? (ansEl.value || ansEl.dataset.choice || (ansEl.textContent||'').trim()) : ''; const correct = String(ans).trim().toLowerCase() === String(prob.answer).trim().toLowerCase(); if(correct){ practiceState.streak++; playSound(true); celebrate(); showTempMessage('Great job! 🎉', true); } else { practiceState.streak=0; playSound(false); showTempMessage('Try again — the right answer was: '+prob.answer, false); }
+        // update progress
+        const prog = loadProgress(currentUser.username); prog[selectedGrade] = prog[selectedGrade]||{}; prog[selectedGrade][m.id] = prog[selectedGrade][m.id]||{attempts:0,correct:0}; prog[selectedGrade][m.id].attempts += 1; if(correct) prog[selectedGrade][m.id].correct += 1; saveProgress(currentUser.username, prog); renderProgress(); renderRecommendations();
+        if(practiceState.streak>=3) practiceState.difficulty = Math.min(practiceState.difficulty+1,5); if(!correct && practiceState.difficulty>1) practiceState.difficulty = Math.max(1,practiceState.difficulty-1); renderPractice(); }); area.appendChild(submit); const tip=document.createElement('div'); tip.className='small'; tip.style.marginTop='8px'; tip.textContent='Keep a streak of 3 correct answers to increase difficulty.'; area.appendChild(tip);
+    }
+
+    function showTempMessage(text,isGood){ const note=document.createElement('div'); note.style.position='fixed'; note.style.right='18px'; note.style.top='80px'; note.style.padding='10px 12px'; note.style.borderRadius='10px'; note.style.boxShadow='0 2px 6px rgba(0,0,0,.12)'; note.style.background = isGood? 'linear-gradient(90deg,#e6fff2,#f0fff8)' : '#fff5f5'; note.textContent=text; document.body.appendChild(note); setTimeout(()=>{ note.style.transition='opacity .4s'; note.style.opacity=0; setTimeout(()=>note.remove(),400); },1500); }
+
+    // sound feedback
+    function playSound(win){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type='sine'; o.frequency.value = win? 880: 220; g.gain.value=0.03; o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{o.stop();ctx.close();},120);}catch(e){}
+    }
+
+    // Teacher area & export
+    function renderTeacherArea(){ const area = el('#teacher-area'); if(!currentUser || currentUser.role!=='teacher'){ area.textContent='Login as a teacher to view class progress and export reports.'; return; } area.innerHTML=''; const users = loadUsers(); const btnExport=document.createElement('button'); btnExport.className='btn small'; btnExport.textContent='Export CSV'; btnExport.addEventListener('click', ()=>exportCSV()); area.appendChild(btnExport); const list=document.createElement('div'); list.style.marginTop='8px'; Object.keys(users).forEach(u=>{ const uNode=document.createElement('div'); uNode.style.marginTop='6px'; uNode.innerHTML = `<strong>${u}</strong> — ${users[u].role}`; list.appendChild(uNode); }); area.appendChild(list);
+    }
+
+    function exportCSV(){ if(!currentUser || currentUser.role!=='teacher') return alert('Teacher only'); const allProg = loadProgress(); let csv='username,grade,module,attempts,correct\n'; Object.keys(allProg).forEach(user=>{ Object.keys(allProg[user]).forEach(grade=>{ Object.keys(allProg[user][grade]).forEach(mod=>{ const row = allProg[user][grade][mod]; csv += `${user},${grade},${mod},${row.attempts||0},${row.correct||0}\n`; }); }); }); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='luma_progress.csv'; a.click(); URL.revokeObjectURL(url); alert('CSV exported'); }
+
+    // initial render
+    elAll('.grade-btn').forEach(b=>{ b.addEventListener('click', ()=>{ elAll('.grade-btn').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); selectedGrade = Number(b.dataset.grade); renderModules(); renderRecommendations('choose'); renderProgress(); }); }); document.querySelector('.grade-btn[data-grade="1"]').classList.add('selected');
+
+    function renderModules(){ refreshModules(); }
+
+    // init
+    renderAuth(); renderDiagnostic(); renderProgress(); renderRecommendations(); refreshModules(); renderTeacherArea(); runContrastCheck(); document.body.dataset.bg='soft-mint';
+
+    </script>
+  </body>
+</html>
